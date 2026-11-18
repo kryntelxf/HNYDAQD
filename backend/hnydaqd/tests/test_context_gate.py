@@ -1,32 +1,53 @@
 import pytest
-# PERBAIKAN: Hapus awalan 'backend.' karena kita sudah berada di dalam folder backend
 from hnydaqd.policy.context_gate import ContextGate
 from hnydaqd.config import ClassificationLevel
 
+
 def test_context_gate_blocks_raw_secret():
     gate = ContextGate(max_allowed_level=ClassificationLevel.INTERNAL)
-    
+
     chunks = [
-        {"id": "1", "text": "Bahan A dan Bahan B", "classification": ClassificationLevel.INTERNAL},
-        {"id": "2", "text": "Suhu 500 derajat", "classification": ClassificationLevel.RAW_SECRET},
-        {"id": "3", "text": "Info publik", "classification": ClassificationLevel.PUBLIC}
+        {
+            "id": "1",
+            "text": "Bahan A dan Bahan B",
+            "classification": ClassificationLevel.INTERNAL,
+        },
+        {
+            "id": "2",
+            "text": "Suhu 500 derajat",
+            "classification": ClassificationLevel.RAW_SECRET,
+        },
+        {
+            "id": "3",
+            "text": "Info publik",
+            "classification": ClassificationLevel.PUBLIC,
+        },
     ]
-    
+
     allowed = gate.authorize_context(chunks)
-    
+
     assert len(allowed) == 2
     assert any(c["id"] == "1" for c in allowed)
     assert any(c["id"] == "3" for c in allowed)
     assert not any(c["id"] == "2" for c in allowed), "RAW_SECRET harus diblokir!"
 
+
 def test_context_gate_allows_confidential_for_private_model():
     gate = ContextGate(max_allowed_level=ClassificationLevel.CONFIDENTIAL)
-    
+
     chunks = [
-        {"id": "1", "text": "Data rahasia", "classification": ClassificationLevel.CONFIDENTIAL},
-        {"id": "2", "text": "Resep asli", "classification": ClassificationLevel.RAW_SECRET}
+        {
+            "id": "1",
+            "text": "Data rahasia",
+            "classification": ClassificationLevel.CONFIDENTIAL,
+        },
+        {
+            "id": "2",
+            "text": "Resep asli",
+            "classification": ClassificationLevel.RAW_SECRET,
+        },
     ]
-    
+
     allowed = gate.authorize_context(chunks)
     assert len(allowed) == 1
     assert allowed[0]["id"] == "1"
