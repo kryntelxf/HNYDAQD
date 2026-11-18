@@ -24,10 +24,11 @@ jobs:
           pip install pytest pydantic
 
       - name: Run HNYDAQD synthetic tests
+        working-directory: ./backend
         run: |
           # Jika folder test belum ada, lewati saja agar CI tidak error
-          if [ -d backend/hnydaqd/tests ]; then
-            pytest backend/hnydaqd/tests -v
+          if [ -d hnydaqd/tests ]; then
+            pytest hnydaqd/tests -v
           else
             echo "Belum ada test HNYDAQD. Skipping..."
           fi
