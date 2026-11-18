@@ -1,6 +1,6 @@
 import logging
 from typing import List, Dict, Any
-from backend.hnydaqd.config import ClassificationLevel, CLASSIFICATION_RANK
+from hnydaqd.config import ClassificationLevel, CLASSIFICATION_RANK
 
 logger = logging.getLogger(__name__)
 
