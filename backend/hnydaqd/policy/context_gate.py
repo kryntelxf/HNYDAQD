@@ -10,17 +10,9 @@ class ContextGateBlockedError(Exception):
 
 class ContextGate:
     def __init__(self, max_allowed_level: ClassificationLevel):
-        """
-        max_allowed_level: Batas maksimal klasifikasi yang boleh dilewatkan.
-        Contoh: Jika model AI eksternal, max_allowed_level = INTERNAL.
-        """
         self.max_allowed_level = max_allowed_level
 
     def authorize_context(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """
-        Memfilter chunks. Jika ada chunk yang melebihi batas, chunk tersebut dibuang.
-        Jika seluruh request membahayakan, bisa raise ContextGateBlockedError.
-        """
         if not chunks:
             return []
 
@@ -28,12 +20,11 @@ class ContextGate:
         max_rank = CLASSIFICATION_RANK[self.max_allowed_level]
 
         for chunk in chunks:
-            # Asumsi: chunk memiliki metadata 'classification'
             chunk_level = chunk.get("classification", ClassificationLevel.RAW_SECRET)
             
             if CLASSIFICATION_RANK[chunk_level] > max_rank:
                 logger.warning(f"BLOCKED: Chunk {chunk.get('id', 'unknown')} melebihi batas klasifikasi.")
-                continue # Buang chunk ini
+                continue
             
             allowed_chunks.append(chunk)
 
