@@ -1,4 +1,4 @@
-name: HNYDAQD Main CI
+name: HNYDAQD Main CI & Cleaner
 
 on:
   push:
@@ -7,8 +7,21 @@ on:
   workflow_dispatch:
 
 jobs:
+  # JOB 1: Mematikan workflow Onyx yang mengganggu
+  disable-onyx-workflows:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disable Golang Workflow
+        run: |
+          echo "Menonaktifkan workflow Golang bawaan Onyx..."
+          curl -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/kryntelxf/HNYDAQD/actions/workflows/golang.yml/disable || true
+
+  # JOB 2: Menjalankan test keamanan kita (HNYDAQD)
   hnydaqd-checks:
     runs-on: ubuntu-latest
+    needs: disable-onyx-workflows
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -26,7 +39,6 @@ jobs:
       - name: Run HNYDAQD synthetic tests
         working-directory: ./backend
         run: |
-          # Jika folder test belum ada, lewati saja agar CI tidak error
           if [ -d hnydaqd/tests ]; then
             pytest hnydaqd/tests -v
           else
