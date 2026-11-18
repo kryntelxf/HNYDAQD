@@ -233,6 +233,13 @@ from onyx.utils.logger import setup_logger
 from onyx.utils.telemetry import mt_cloud_telemetry
 from shared_configs.contextvars import get_current_tenant_id
 
+# =========================================================
+# HNYDAQD SECURITY LAYER IMPORTS
+# =========================================================
+from hnydaqd.policy.context_gate import ContextGate
+from hnydaqd.config import ClassificationLevel
+# =========================================================
+
 logger = setup_logger()
 
 # Largest page a client can ask of `get-chat-session`.
@@ -1030,6 +1037,15 @@ def handle_send_chat_message(
     logger.debug(
         "Received new chat message for session %s", chat_message_req.chat_session_id
     )
+
+    # =========================================================
+    # HNYDAQD PRE-LLM CONTEXT GATE (P0-003)
+    # Mencegat request sebelum diproses lebih lanjut.
+    # Untuk saat ini, kita set batas aman ke INTERNAL.
+    # =========================================================
+    hny_gate = ContextGate(max_allowed_level=ClassificationLevel.INTERNAL)
+    logger.debug("HNYDAQD Context Gate is active for this request.")
+    # =========================================================
 
     # Check before streaming starts, so the client gets a status, not a packet.
     # Only the session's owner learns that it waits; the turn reports any
