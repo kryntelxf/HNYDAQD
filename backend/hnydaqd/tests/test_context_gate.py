@@ -1,6 +1,5 @@
-import pytest
-from hnydaqd.policy.context_gate import ContextGate
 from hnydaqd.config import ClassificationLevel
+from hnydaqd.policy.context_gate import ContextGate
 
 
 def test_context_gate_blocks_raw_secret():
