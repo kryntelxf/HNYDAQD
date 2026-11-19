@@ -12,7 +12,7 @@ class ContextGateBlockedError(Exception):
 
 
 class ContextGate:
-    def __init__(self, max_allowed_level: ClassificationLevel):
+    def __init__(self, max_allowed_level: ClassificationLevel) -> None:
         self.max_allowed_level = max_allowed_level
 
     def authorize_context(
@@ -21,11 +21,8 @@ class ContextGate:
         if not chunks:
             return []
 
-        # 1. Cek Cumulative Disclosure (Ledger)
-        # Ini akan melempar error jika user terdeteksi mencurigakan
         disclosure_ledger.record_and_verify(user_id, chunks)
 
-        # 2. Cek Batas Klasifikasi per Chunk
         allowed_chunks = []
         max_rank = CLASSIFICATION_RANK[self.max_allowed_level]
 
