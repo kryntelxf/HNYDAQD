@@ -1,8 +1,10 @@
 import pytest
-from hnydaqd.encryption.envelope import EnvelopeEncryption, EncryptionError
+
+from hnydaqd.encryption.envelope import EncryptionError, EnvelopeEncryption
 
 # Kunci dummy 32-byte (64 karakter hex) khusus untuk testing
 TEST_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+
 
 def test_encryption_roundtrip():
     # Inisialisasi
@@ -18,10 +20,13 @@ def test_encryption_roundtrip():
     decrypted = crypto.decrypt(encrypted)
     assert decrypted == original_text
 
+
 def test_encryption_fails_with_wrong_key():
     crypto1 = EnvelopeEncryption(TEST_KEY)
     # Kunci berbeda (tapi tetap 32-byte)
-    crypto2 = EnvelopeEncryption("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    crypto2 = EnvelopeEncryption(
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    )
 
     encrypted = crypto1.encrypt("Data Sangat Rahasia")
 
