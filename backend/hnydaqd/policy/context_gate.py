@@ -1,13 +1,15 @@
 import logging
-from typing import List, Dict, Any
-from hnydaqd.config import ClassificationLevel, CLASSIFICATION_RANK
+from typing import Any, Dict, List
+
+from hnydaqd.config import CLASSIFICATION_RANK, ClassificationLevel
 from hnydaqd.disclosure.ledger import disclosure_ledger
 
 logger = logging.getLogger(__name__)
 
+
 class ContextGateBlockedError(Exception):
     """Dilempar ketika context diblokir oleh kebijakan keamanan."""
-    pass
+
 
 class ContextGate:
     def __init__(self, max_allowed_level: ClassificationLevel):
@@ -28,13 +30,12 @@ class ContextGate:
         max_rank = CLASSIFICATION_RANK[self.max_allowed_level]
 
         for chunk in chunks:
-            chunk_level = chunk.get(
-                "classification", ClassificationLevel.RAW_SECRET
-            )
+            chunk_level = chunk.get("classification", ClassificationLevel.RAW_SECRET)
 
             if CLASSIFICATION_RANK[chunk_level] > max_rank:
                 logger.warning(
-                    f"BLOCKED: Chunk {chunk.get('id', 'unknown')} melebihi batas klasifikasi."
+                    "BLOCKED: Chunk %s melebihi batas klasifikasi.",
+                    chunk.get("id", "unknown"),
                 )
                 continue
 
