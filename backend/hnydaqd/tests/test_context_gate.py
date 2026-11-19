@@ -24,7 +24,7 @@ def test_context_gate_blocks_raw_secret():
         },
     ]
 
-    allowed = gate.authorize_context(chunks)
+    allowed = gate.authorize_context(chunks, user_id="user_test_1")
 
     assert len(allowed) == 2
     assert any(c["id"] == "1" for c in allowed)
@@ -48,6 +48,6 @@ def test_context_gate_allows_confidential_for_private_model():
         },
     ]
 
-    allowed = gate.authorize_context(chunks)
+    allowed = gate.authorize_context(chunks, user_id="user_test_2")
     assert len(allowed) == 1
     assert allowed[0]["id"] == "1"
