@@ -6,35 +6,52 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
-  # JOB 1: Mematikan workflow Onyx yang mengganggu
   disable-onyx-workflows:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     steps:
-      - name: Disable Golang Workflow
+      - name: Disable Unneeded Workflows
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Menonaktifkan workflow Golang bawaan Onyx..."
-          curl -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/kryntelxf/HNYDAQD/actions/workflows/pr-golang-tests.yml/disable || true
+          echo "Disabling Onyx default workflows..."
+          WORKFLOWS=(
+            "pr-golang-tests.yml"
+            "cve-tracking.yml"
+            "update-sandbox-browser.yml"
+            "pr-python-tests.yml"
+            "pr-playwright-tests.yml"
+            "pr-python-connector-tests.yml"
+            "pr-python-checks.yml"
+            "pr-database-tests.yml"
+            "pr-external-dependency-unit-tests.yml"
+          )
+          for wf in "${WORKFLOWS[@]}"; do
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$wf/disable" || true
+          done
 
-  # JOB 2: Menjalankan test keamanan kita (HNYDAQD)
   hnydaqd-checks:
     runs-on: ubuntu-latest
     needs: disable-onyx-workflows
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
           python-version: '3.13'
 
-      - name: Install minimal dependencies
+      - name: Install minimal deps
         run: |
           python -m pip install --upgrade pip
-          # PERBAIKAN: Menambahkan cryptography
           pip install pytest pydantic cryptography
 
       - name: Run HNYDAQD synthetic tests
@@ -43,5 +60,5 @@ jobs:
           if [ -d hnydaqd/tests ]; then
             pytest hnydaqd/tests -v
           else
-            echo "Belum ada test HNYDAQD. Skipping..."
+            echo "No HNYDAQD tests yet."
           fi
