@@ -2,7 +2,7 @@ from hnydaqd.config import ClassificationLevel
 from hnydaqd.policy.context_gate import ContextGate
 
 
-def test_context_gate_blocks_raw_secret():
+def test_context_gate_blocks_raw_secret() -> None:
     gate = ContextGate(max_allowed_level=ClassificationLevel.INTERNAL)
 
     chunks = [
@@ -31,7 +31,7 @@ def test_context_gate_blocks_raw_secret():
     assert not any(c["id"] == "2" for c in allowed), "RAW_SECRET harus diblokir!"
 
 
-def test_context_gate_allows_confidential_for_private_model():
+def test_context_gate_allows_confidential_for_private_model() -> None:
     gate = ContextGate(max_allowed_level=ClassificationLevel.CONFIDENTIAL)
 
     chunks = [
