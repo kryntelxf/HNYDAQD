@@ -16,7 +16,7 @@ jobs:
           echo "Menonaktifkan workflow Golang bawaan Onyx..."
           curl -X PUT -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
           -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/kryntelxf/HNYDAQD/actions/workflows/golang.yml/disable || true
+          https://api.github.com/repos/kryntelxf/HNYDAQD/actions/workflows/pr-golang-tests.yml/disable || true
 
   # JOB 2: Menjalankan test keamanan kita (HNYDAQD)
   hnydaqd-checks:
@@ -34,7 +34,8 @@ jobs:
       - name: Install minimal dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pydantic
+          # PERBAIKAN: Menambahkan cryptography
+          pip install pytest pydantic cryptography
 
       - name: Run HNYDAQD synthetic tests
         working-directory: ./backend
