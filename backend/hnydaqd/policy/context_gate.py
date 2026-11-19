@@ -1,29 +1,44 @@
-import pytest
+import logging
+from typing import Any, Dict, List
 
-from hnydaqd.encryption.envelope import EncryptionError, EnvelopeEncryption
+from hnydaqd.config import CLASSIFICATION_RANK, ClassificationLevel
+from hnydaqd.disclosure.ledger import disclosure_ledger
 
-TEST_KEY = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-
-
-def test_encryption_roundtrip() -> None:
-    crypto = EnvelopeEncryption(TEST_KEY)
-    original_text = "Resep Rahasia: Bahan A + Bahan B pada suhu 500 derajat."
-
-    encrypted = crypto.encrypt(original_text)
-    assert encrypted != original_text
-    assert len(encrypted) > 0
-
-    decrypted = crypto.decrypt(encrypted)
-    assert decrypted == original_text
+logger = logging.getLogger(__name__)
 
 
-def test_encryption_fails_with_wrong_key() -> None:
-    crypto1 = EnvelopeEncryption(TEST_KEY)
-    crypto2 = EnvelopeEncryption(
-        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-    )
+class ContextGateBlockedError(Exception):
+    """Dilempar ketika context diblokir oleh kebijakan keamanan."""
 
-    encrypted = crypto1.encrypt("Data Sangat Rahasia")
 
-    with pytest.raises(EncryptionError):
-        crypto2.decrypt(encrypted)
+class ContextGate:
+    def __init__(self, max_allowed_level: ClassificationLevel) -> None:
+        self.max_allowed_level = max_allowed_level
+
+    def authorize_context(
+        self, chunks: List[Dict[str, Any]], user_id: str = "anonymous"
+    ) -> List[Dict[str, Any]]:
+        if not chunks:
+            return []
+
+        # 1. Cek Cumulative Disclosure (Ledger)
+        # Ini akan melempar error jika user terdeteksi mencurigakan
+        disclosure_ledger.record_and_verify(user_id, chunks)
+
+        # 2. Cek Batas Klasifikasi per Chunk
+        allowed_chunks = []
+        max_rank = CLASSIFICATION_RANK[self.max_allowed_level]
+
+        for chunk in chunks:
+            chunk_level = chunk.get("classification", ClassificationLevel.RAW_SECRET)
+
+            if CLASSIFICATION_RANK[chunk_level] > max_rank:
+                logger.warning(
+                    "BLOCKED: Chunk %s melebihi batas klasifikasi.",
+                    chunk.get("id", "unknown"),
+                )
+                continue
+
+            allowed_chunks.append(chunk)
+
+        return allowed_chunks
