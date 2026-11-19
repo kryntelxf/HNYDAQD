@@ -12,34 +12,23 @@ class DisclosureRiskError(Exception):
 
 class DisclosureLedger:
     def __init__(self) -> None:
-        # Menyimpan riwayat klasifikasi sensitif yang pernah diakses oleh user
-        # Format: { "user_id": [ClassificationLevel.RAW_SECRET, ...] }
         self._history: Dict[str, List[ClassificationLevel]] = {}
-
-        # Batas toleransi sebelum diblokir
         self.MAX_SENSITIVE_ACCESSES = 3
 
     def record_and_verify(
         self, user_id: str, requested_chunks: List[Dict[str, Any]]
     ) -> None:
-        """
-        Mencatat akses dan memverifikasi apakah user sudah melewati batas aman.
-        Jika melewati batas, raise DisclosureRiskError.
-        """
         if user_id not in self._history:
             self._history[user_id] = []
 
         for chunk in requested_chunks:
             level = chunk.get("classification", ClassificationLevel.PUBLIC)
-            # Kita hanya peduli pada data yang sangat sensitif
             if level in [
                 ClassificationLevel.HIGHLY_CONFIDENTIAL,
                 ClassificationLevel.RAW_SECRET,
             ]:
                 self._history[user_id].append(level)
 
-        # Bersihkan riwayat lama agar tidak menyimpan selamanya
-        # (hanya cek 10 akses terakhir)
         self._history[user_id] = self._history[user_id][-10:]
 
         total_sensitive_recent = sum(
@@ -65,5 +54,4 @@ class DisclosureLedger:
             )
 
 
-# Instance global untuk digunakan di seluruh aplikasi
 disclosure_ledger = DisclosureLedger()
