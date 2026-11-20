@@ -32,6 +32,8 @@ jobs:
             "pr-external-dependency-unit-tests.yml"
             "quality-checks.yml"
             "pr-quality-checks.yml"
+            "cve-alerts.yml"
+            "cve-alerts-nightly.yml"
           )
           for wf in "${WORKFLOWS[@]}"; do
             gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$wf/disable" || true
