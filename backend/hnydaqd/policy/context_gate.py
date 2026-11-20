@@ -22,7 +22,6 @@ class ContextGate:
             return []
 
         # 1. Cek Cumulative Disclosure (Ledger)
-        # Ini akan melempar error jika user terdeteksi mencurigakan
         disclosure_ledger.record_and_verify(user_id, chunks)
 
         # 2. Cek Batas Klasifikasi per Chunk
