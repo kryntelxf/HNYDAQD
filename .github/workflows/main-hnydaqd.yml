@@ -8,12 +8,11 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   disable-onyx-workflows:
     runs-on: ubuntu-latest
-    permissions:
-      actions: write
     steps:
       - name: Disable Unneeded Workflows
         env:
@@ -34,6 +33,7 @@ jobs:
             "pr-quality-checks.yml"
             "cve-alerts.yml"
             "cve-alerts-nightly.yml"
+            "golang.yml"
           )
           for wf in "${WORKFLOWS[@]}"; do
             gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$wf/disable" || true
@@ -44,25 +44,28 @@ jobs:
     needs: disable-onyx-workflows
     steps:
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
-      - name: Install minimal deps
+      - name: Install dependencies (WAJIB: cryptography dan pytest)
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pydantic cryptography
+          # Instal cryptography SEBELUM pytest agar filter Onyx tidak crash
+          pip install cryptography pytest pydantic
 
-      - name: Run HNYDAQD synthetic tests
+      - name: Verify Cryptography Installed
+        run: |
+          python -c "import cryptography; print('Cryptography OK:', cryptography.__version__)"
+
+      - name: Run HNYDAQD Tests
         working-directory: ./backend
         run: |
-          if [ -d hnydaqd/tests ]; then
-            pytest hnydaqd/tests -v
-          else
-            echo "No HNYDAQD tests yet."
-          fi
+          # Jalankan pytest dengan mengabaikan pytest.ini Onyx (-c /dev/null)
+          # dan set PYTHONPATH ke root backend agar import hnydaqd berhasil
+          PYTHONPATH=. pytest -c /dev/null -v hnydaqd/tests
