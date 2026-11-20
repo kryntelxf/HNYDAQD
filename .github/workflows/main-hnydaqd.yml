@@ -20,19 +20,10 @@ jobs:
         run: |
           echo "Disabling Onyx default workflows..."
           WORKFLOWS=(
-            "pr-golang-tests.yml"
-            "cve-tracking.yml"
-            "update-sandbox-browser.yml"
-            "pr-python-tests.yml"
-            "pr-playwright-tests.yml"
-            "pr-python-connector-tests.yml"
-            "pr-python-checks.yml"
-            "pr-database-tests.yml"
-            "pr-external-dependency-unit-tests.yml"
-            "quality-checks.yml"
-            "pr-quality-checks.yml"
-            "cve-alerts.yml"
-            "cve-alerts-nightly.yml"
+            "pr-golang-tests.yml" "cve-tracking.yml" "update-sandbox-browser.yml"
+            "pr-python-tests.yml" "pr-playwright-tests.yml" "pr-python-connector-tests.yml"
+            "pr-python-checks.yml" "pr-database-tests.yml" "pr-external-dependency-unit-tests.yml"
+            "quality-checks.yml" "pr-quality-checks.yml" "cve-alerts.yml" "cve-alerts-nightly.yml"
             "golang.yml"
           )
           for wf in "${WORKFLOWS[@]}"; do
@@ -53,13 +44,20 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install dependencies
+      # KUNCI PERBAIKAN: Gunakan Virtual Environment agar pip & pytest sinkron
+      - name: Create Virtual Environment & Install Deps
         run: |
+          python -m venv .venv
+          source .venv/bin/activate
           python -m pip install --upgrade pip
           pip install cryptography pytest pydantic
+          echo "Cryptography version:"
+          python -c "import cryptography; print(cryptography.__version__)"
 
       - name: Run HNYDAQD Tests (Isolated Config)
         working-directory: ./backend/hnydaqd
         run: |
-          # Menggunakan pytest.ini milik HNYDAQD, bukan milik Onyx
+          # Aktifkan venv di dalam folder test
+          source ../../.venv/bin/activate
+          # Jalankan test
           pytest -v tests
