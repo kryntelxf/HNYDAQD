@@ -36,28 +36,22 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.13'
 
-      # KUNCI PERBAIKAN: Gunakan Virtual Environment agar pip & pytest sinkron
-      - name: Create Virtual Environment & Install Deps
+      # KUNCI PERBAIKAN: Install langsung ke Python environment aktif
+      - name: Install dependencies
         run: |
-          python -m venv .venv
-          source .venv/bin/activate
           python -m pip install --upgrade pip
-          pip install cryptography pytest pydantic
-          echo "Cryptography version:"
-          python -c "import cryptography; print(cryptography.__version__)"
+          python -m pip install cryptography pytest pydantic
+          echo "--- VERIFIKASI ---"
+          python -c "import cryptography; print('Cryptography OK:', cryptography.__version__)"
 
-      - name: Run HNYDAQD Tests (Isolated Config)
+      - name: Run HNYDAQD Tests
         working-directory: ./backend/hnydaqd
         run: |
-          # Aktifkan venv di dalam folder test
-          source ../../.venv/bin/activate
-          # Jalankan test
-          pytest -v tests
+          # KUNCI PERBAIKAN: Gunakan "python -m pytest" agar sinkron dengan pip
+          python -m pytest -v tests
