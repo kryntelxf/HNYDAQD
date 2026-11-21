@@ -24,9 +24,13 @@ jobs:
       - name: Install cryptography and dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install cryptography pytest pydantic
+          # KUNCI PERBAIKAN: Gunakan --user agar terinstal di site-packages user
+          python -m pip install --user cryptography pytest pydantic
           python -c "import cryptography; print('OK:', cryptography.__version__)"
 
       - name: Run tests
         run: |
-          PYTHONPATH=backend python -m pytest -c /dev/null -v backend/hnydaqd/tests
+          # KUNCI PERBAIKAN: Tambahkan site-packages user ke PYTHONPATH
+          # agar pytest bisa menemukan cryptography
+          export PYTHONPATH=$PYTHONPATH:$(python -m site --user-site):backend
+          python -m pytest -c /dev/null -v backend/hnydaqd/tests
