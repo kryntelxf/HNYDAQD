@@ -34,18 +34,18 @@ class RoutingDecision:
 
 def route_for_classification(data_level: ClassificationLevel) -> RoutingDecision:
     """
-    Memilih provider aman untuk klasifikasi data tertentu.
-    Prioritaskan private jika data sangat sensitif, lalu enterprise_safe,
-    lalu external.
+    Memilih provider termurah yang masih aman untuk klasifikasi data tertentu.
+
+    Urutan prioritas: EXTERNAL > ENTERPRISE_SAFE > PRIVATE
+    (murah -> mahal, tetapi hanya dipilih jika level data masih diizinkan).
     """
     data_rank = CLASSIFICATION_RANK[data_level]
 
-    # Cari provider dengan kapasitas tertinggi yang masih diizinkan
-    # Urutan prioritas: PRIVATE > ENTERPRISE_SAFE > EXTERNAL
+    # Cari provider termurah (paling rendah kapasitasnya) yang masih aman.
     for provider in [
-        ProviderType.PRIVATE,
-        ProviderType.ENTERPRISE_SAFE,
         ProviderType.EXTERNAL,
+        ProviderType.ENTERPRISE_SAFE,
+        ProviderType.PRIVATE,
     ]:
         max_level = PROVIDER_MAX_LEVEL[provider]
         if CLASSIFICATION_RANK[max_level] >= data_rank:
@@ -57,7 +57,8 @@ def route_for_classification(data_level: ClassificationLevel) -> RoutingDecision
             )
             return RoutingDecision(provider=provider, max_classification=max_level)
 
-    # Tidak ada provider yang cocok (seharusnya tidak terjadi karena PRIVATE menangani semuanya)
+    # Tidak ada provider yang cocok (seharusnya tidak terjadi karena PRIVATE
+    # menangani semua level, tapi tetap dijaga untuk keamanan tipe).
     raise ProviderRoutingError(
         f"Tidak ada provider yang diizinkan untuk klasifikasi {data_level.value}."
     )
@@ -83,4 +84,4 @@ def assert_provider_allowed(
         )
         raise ProviderRoutingError(
             f"Provider {provider.value} tidak boleh menerima data {data_level.value}."
-  )
+    )
