@@ -17,7 +17,9 @@ from fastapi import (
 )
 from fastapi.responses import JSONResponse, StreamingResponse
 from hnydaqd.config import ClassificationLevel
-from hnydaqd.policy.context_gate import ContextGate
+from hnydaqd.identity.roles import UserRole
+from hnydaqd.identity.session import determine_role
+from hnydaqd.policy.service import policy_service
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -1033,8 +1035,16 @@ def handle_send_chat_message(
         "Received new chat message for session %s", chat_message_req.chat_session_id
     )
 
-    hny_gate = ContextGate(max_allowed_level=ClassificationLevel.INTERNAL)
-    logger.debug("HNYDAQD Context Gate is active for this request.")
+    # HNYDAQD: tentukan role user dan siapkan policy service.
+    hny_user_role = determine_role(
+        is_admin=bool(getattr(user, "is_admin", False)),
+        email=getattr(user, "email", None),
+    )
+    logger.info(
+        "HNYDAQD: policy gate aktif untuk user=%s role=%s",
+        user.id,
+        hny_user_role.value,
+    )
 
     # Check before streaming starts, so the client gets a status, not a packet.
     # Only the session's owner learns that it waits; the turn reports any
@@ -1184,6 +1194,19 @@ def handle_send_chat_message(
 
         finally:
             logger.debug("Stream generator finished")
+
+    # HNYDAQD: jalankan policy service pada additional_context yang
+    # dikirim user (jika ada). Jika `chunks` kosong, ini no-op.
+    if chat_message_req.additional_context:
+        raw_chunks = [
+            {"id": str(i), "classification": ClassificationLevel.RAW_SECRET}
+            for i, _ in enumerate(chat_message_req.additional_context)
+        ]
+        policy_service.authorize_and_record(
+            user_id=str(user.id) if user.id else "anonymous",
+            user_role=hny_user_role,
+            chunks=raw_chunks,
+        )
 
     return StreamingResponse(stream_generator(), media_type="text/event-stream")
 
