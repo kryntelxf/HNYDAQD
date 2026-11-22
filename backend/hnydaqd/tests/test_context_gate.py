@@ -4,7 +4,7 @@ from hnydaqd.policy.context_gate import ContextGate
 
 
 def test_context_gate_blocks_raw_secret() -> None:
-    # Gunakan SCIENTIST sebagai representasi role "Internal" (maks CONFIDENTIAL)
+    # Scientist max clearance = CONFIDENTIAL, jadi RAW_SECRET harus diblokir
     gate = ContextGate(user_role=UserRole.SCIENTIST)
 
     chunks = [
@@ -33,10 +33,9 @@ def test_context_gate_blocks_raw_secret() -> None:
     assert not any(c["id"] == "2" for c in allowed), "RAW_SECRET harus diblokir!"
 
 
-def test_context_gate_allows_confidential_for_private_model() -> None:
-    # Gunakan OWNER sebagai representasi role yang bisa lihat hingga RAW_SECRET
-    # (Tapi kita hanya test hingga CONFIDENTIAL di sini)
-    gate = ContextGate(user_role=UserRole.OWNER)
+def test_context_gate_allows_confidential_for_scientist() -> None:
+    # Scientist boleh lihat CONFIDENTIAL, tapi tidak RAW_SECRET
+    gate = ContextGate(user_role=UserRole.SCIENTIST)
 
     chunks = [
         {
@@ -52,5 +51,5 @@ def test_context_gate_allows_confidential_for_private_model() -> None:
     ]
 
     allowed = gate.authorize_context(chunks, user_id="user_test_2")
-    # OWNER boleh lihat keduanya
-    assert len(allowed) == 2
+    assert len(allowed) == 1
+    assert allowed[0]["id"] == "1"
