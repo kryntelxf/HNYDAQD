@@ -3,23 +3,21 @@ import sys
 
 
 def _ensure_installed(packages: list[str]) -> None:
-    """Ensures required runtime packages are available before any test runs.
+    """Ensures the given packages are importable, installing them if not.
 
-    This exists because the Onyx upstream repository does not declare
-    `cryptography` (or the test-only HTTP/FastAPI deps) as dependencies. It
-    uses `package = false` and overrides only version ranges. HNYDAQD's
-    `envelope.py` requires `cryptography` at runtime, and its API tests
-    require `httpx` + `fastapi` via `TestClient`. All must be present in
-    any environment that imports those modules.
+    HNYDAQD declares `cryptography` as a runtime dependency, but the Onyx
+    `pyproject.toml` uses `package = false` and does not include it, so
+    each test environment must ensure it is present before tests run.
+    `httpx` and `fastapi` are needed by the API tests.
     """
     for package in packages:
-        module_name = package.replace("-", "_")
+        module = package.replace("-", "_")
         try:
-            __import__(module_name)
+            __import__(module)
         except ModuleNotFoundError:
             subprocess.check_call(
                 [sys.executable, "-m", "pip", "install", "--quiet", package]
             )
 
 
-_ensure_installed(["cryptography", "httpx", "fastapi"])ography_installed
+_ensure_installed(["cryptography", "httpx", "fastapi"])
