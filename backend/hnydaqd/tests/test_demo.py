@@ -10,10 +10,9 @@ def test_demo_runs_successfully() -> None:
     This is a smoke test: if the demo crashes, the security pipeline
     is broken in a way unit tests might not catch.
     """
-    backend_dir = Path(__file__).resolve().parents[3]  # .../backend
+    # backend/hnydaqd/tests/test_demo.py -> parents[2] == backend/
+    backend_dir = Path(__file__).resolve().parents[2]
 
-    # Ensure the subprocess can import `hnydaqd` regardless of the parent's
-    # environment (CI, local, pytest, etc.).
     env = os.environ.copy()
     existing_pythonpath = env.get("PYTHONPATH", "")
     env["PYTHONPATH"] = (
