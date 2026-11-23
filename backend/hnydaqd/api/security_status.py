@@ -54,4 +54,4 @@ def get_security_status() -> SecurityStatusResponse:
             )
             for provider, level in PROVIDER_MAX_LEVEL.items()
         ],
-  )
+    )
