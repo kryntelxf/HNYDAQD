@@ -1,0 +1,44 @@
+name: HNYDAQD SBOM
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "backend/hnydaqd/requirements.txt"
+      - "backend/hnydaqd/**/requirements.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install cyclonedx-bom
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install cyclonedx-bom
+
+      - name: Generate SBOM for HNYDAQD
+        run: |
+          cyclonedx-py requirements \
+            --input backend/hnydaqd/requirements.txt \
+            --output hnydaqd-sbom.json \
+            --output-format JSON
+
+      - name: Upload SBOM as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hnydaqd-sbom
+          path: hnydaqd-sbom.json
+          retention-days: 365
