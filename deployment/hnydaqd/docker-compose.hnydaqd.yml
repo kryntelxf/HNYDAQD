@@ -1,0 +1,23 @@
+# HNYDAQD-specific deployment overlay.
+# Use this file together with the base Onyx docker-compose.yml:
+#   docker compose -f deployment/docker_compose/docker-compose.yml \
+#                  -f deployment/hnydaqd/docker-compose.hnydaqd.yml up -d
+
+services:
+  api_server:
+    environment:
+      # HNYDAQD requires a real encryption key, never a default.
+      # Generate once with: openssl rand -hex 32
+      - HNYDAQD_MASTER_KEY=${HNYDAQD_MASTER_KEY:?HNYDAQD_MASTER_KEY must be set to a 64-char hex string}
+      # Force external providers to be disabled by default unless explicitly allowed.
+      - HNYDAQD_ALLOW_EXTERNAL_PROVIDERS=${HNYDAQD_ALLOW_EXTERNAL_PROVIDERS:-false}
+      # Enable audit sink and fail-closed mode.
+      - HNYDAQD_AUDIT_ENABLED=true
+      - HNYDAQD_STRICT_DLP=${HNYDAQD_STRICT_DLP:-false}
+    volumes:
+      # Persist audit chain to the host, outside the container filesystem.
+      - hnydaqd_audit_data:/var/lib/hnydaqd/audit
+
+volumes:
+  hnydaqd_audit_data:
+    driver: local
